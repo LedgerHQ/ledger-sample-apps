@@ -8,6 +8,8 @@ This directory includes sample applications
 
   - [BIP 39 Performance Evaluation](https://github.com/LedgerHQ/blue-sample-apps/tree/master/blue-app-bip39perf) : an application demonstrating the flexibility of re-implementing your own cryptographic primitives when necessary 
 
+  - [Link stress test](https://github.com/LedgerHQ/blue-sample-apps/tree/master/blue-app-secureshot) : a game running on the Secure Element, stressing the events link back and forth
+
 Before compiling those applications, verify that the following environment variables are set
 
   - BOLOS_SDK : must point to [secure_sdk_dev](https://github.com/LedgerHQ/blue-secure-sdk/tree/master) that  has been cloned from this repository
