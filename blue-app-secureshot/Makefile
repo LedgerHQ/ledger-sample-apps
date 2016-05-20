@@ -56,7 +56,7 @@ DEFINES   += HAVE_BAGL HAVE_PRINTF
 ##############
 # Compiler #
 ##############
-GCCPATH   := $(BOLOS_ENV)/gcc-arm-none-eabi-4_7-2013q2/bin/
+GCCPATH   := $(BOLOS_ENV)/gcc-arm-none-eabi-5_3-2016q1/bin/
 CLANGPATH := $(BOLOS_ENV)/clang-arm-fropi/bin
 CC       := $(CLANGPATH)/clang 
 
@@ -95,7 +95,7 @@ LDFLAGS  += -mno-unaligned-access
 LDFLAGS  += -Tscript.ld  -Wl,--gc-sections -Wl,-Map,debug/$(PROG).map,--cref
 LDLIBS   += -Wl,--library-path -Wl,$(GCCPATH)/../lib/armv6-m/
 #LDLIBS   += -Wl,--start-group 
-LDLIBS   += -lm -lgcc -lc -lg_s 
+LDLIBS   += -lm -lgcc -lc 
 #LDLIBS   += -Wl,--end-group
 # -mno-unaligned-access 
 #-pg --coverage
@@ -123,7 +123,7 @@ log = $(if $(strip $(VERBOSE)),$1,@$1)
 default: prepare bin/$(PROG)
 
 load: 
-	python -m ledgerblue.loadApp --fileName bin/$(PROG).hex --appName $(APPNAME)
+	python -m ledgerblue.loadApp --apdu --fileName bin/$(PROG).hex --appName $(APPNAME)
 
 delete:
 	python -m ledgerblue.deleteApp --appName $(APPNAME)

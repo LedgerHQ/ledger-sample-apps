@@ -15,7 +15,7 @@
 #  limitations under the License.
 #*******************************************************************************
 
-APPNAME = HELLO
+APPNAME = HELOPSO 
 
 
 ################
@@ -42,8 +42,8 @@ PROG     := token
 
 CONFIG_PRODUCTIONS := bin/$(PROG)
 
-SOURCE_PATH   := src $(BOLOS_SDK)/src src_usb
-SOURCE_FILES  := $(foreach path, $(SOURCE_PATH),$(shell find $(path) | grep "\.c$$") )
+SOURCE_PATH   := src $(BOLOS_SDK)/src src_usb 
+SOURCE_FILES  := $(foreach path, $(SOURCE_PATH),$(shell find $(path) | grep -E "\.c$$|\.s") )
 INCLUDES_PATH := src_usb $(dir $(shell find src_usb/ | grep "\.h$$")) include src $(BOLOS_SDK)/include $(BOLOS_SDK)/include/arm
 
 ### platform definitions
@@ -60,20 +60,20 @@ GCCPATH   := $(BOLOS_ENV)/gcc-arm-none-eabi-5_3-2016q1/bin/
 CLANGPATH := $(BOLOS_ENV)/clang-arm-fropi/bin
 CC       := $(CLANGPATH)/clang 
 
-CFLAGS   := 
-CFLAGS   += -gdwarf-2  -gstrict-dwarf 
-CFLAGS   += -O0
-#CFLAGS   += -O0 -g3
-#CFLAGS   += -O3 -Os
-CFLAGS   += -mcpu=cortex-m0 -mthumb 
-CFLAGS   += -fno-common -mtune=cortex-m0 -mlittle-endian 
-CFLAGS   += -std=gnu99 -Werror=int-to-pointer-cast -Wall -Wextra #-save-temps
-CFLAGS   += -fdata-sections -ffunction-sections -funsigned-char -fshort-enums 
-CFLAGS   += -mno-unaligned-access 
-CFLAGS   += -Wno-unused-parameter -Wno-duplicate-decl-specifier
+CFLAGS_SHARED   := 
+CFLAGS_SHARED   += -gdwarf-2  -gstrict-dwarf 
+CFLAGS_SHARED   += -mcpu=cortex-m0 -mthumb 
+CFLAGS_SHARED   += -fno-common -mtune=cortex-m0 -mlittle-endian 
+CFLAGS_SHARED   += -std=gnu99 -Werror=int-to-pointer-cast -Wall -Wextra #-save-temps
+CFLAGS_SHARED   += -fdata-sections -ffunction-sections -funsigned-char -fshort-enums 
+CFLAGS_SHARED   += -mno-unaligned-access 
+CFLAGS_SHARED   += -Wno-unused-parameter -Wno-duplicate-decl-specifier
 
-CFLAGS   += -fropi --target=armv6m-none-eabi
+CFLAGS_SHARED   += -fropi --target=armv6m-none-eabi
 #CFLAGS   += -finline-limit-0 -funsigned-bitfields 
+
+CFLAGS_NONOPT := -O0 $(CFLAGS_SHARED)
+CFLAGS_OPT := -O3 $(CFLAGS_SHARED)
 
 AS     := $(GCCPATH)/arm-none-eabi-gcc
 AFLAGS += -ggdb2 -O3 -Os -mcpu=cortex-m0 -fno-common -mtune=cortex-m0
@@ -123,7 +123,7 @@ log = $(if $(strip $(VERBOSE)),$1,@$1)
 default: prepare bin/$(PROG)
 
 load: 
-	python -m ledgerblue.loadApp --apdu --fileName bin/$(PROG).hex --appName $(APPNAME)
+	python -m ledgerblue.loadApp --appFlags 0xC0 --fileName bin/$(PROG).hex --appName $(APPNAME) 
 
 delete:
 	python -m ledgerblue.deleteApp --appName $(APPNAME)
@@ -149,7 +149,6 @@ obj/%.o: %.s
 	@echo "[CC]	$@"
 	$(call log,$(call as_cmdline,$(INCLUDES_PATH), $(DEFINES),$<,$@))
 
-
 ### BEGIN GCC COMPILER RULES
 
 # link_cmdline(objects,dest)		Macro that is used to format arguments for the linker
@@ -159,7 +158,9 @@ link_cmdline = $(LD) $(LDFLAGS) -o $(2) $(1)
 dep_cmdline = $(CC) -M $(CFLAGS) $(addprefix -D,$(2)) $(addprefix -I,$(1)) $(3) | sed 's/\($*\)\.o[ :]*/obj\/\1.o: /g' | sed -e 's/[:\t ][^ ]\+\.c//g' > dep/$(basename $(notdir $(4))).d 2>/dev/null
 
 # cc_cmdline(include,defines,src,dest)	Macro that is used to format arguments for the compiler
-cc_cmdline = $(CC) -c $(CFLAGS) $(addprefix -D,$(2)) $(addprefix -I,$(1)) -o $(4) $(3)
+cc_cmdline = $(CC) -c $(CFLAGS_NONOPT) $(addprefix -D,$(2)) $(addprefix -I,$(1)) -o $(4) $(3)
+
+cc_cmdline_opt = $(CC) -c $(CFLAGS_OPT) $(addprefix -D,$(2)) $(addprefix -I,$(1)) -o $(4) $(3)
 
 as_cmdline = $(AS) -c $(AFLAGS) $(addprefix -D,$(2)) $(addprefix -I,$(1)) -o $(4) $(3)
 
