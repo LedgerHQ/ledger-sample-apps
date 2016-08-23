@@ -15,7 +15,10 @@
 #  limitations under the License.
 #*******************************************************************************
 
-APPNAME = HELOPSO 
+APPNAME = HELLOPSO
+TARGET_ID = 0x31100002 #Nano S
+#TARGET_ID = 0x31000002 #Blue
+APP_LOAD_PARAMS=--appFlags 0x40 --icon ""
 
 
 ################
@@ -42,16 +45,20 @@ PROG     := token
 
 CONFIG_PRODUCTIONS := bin/$(PROG)
 
-SOURCE_PATH   := src $(BOLOS_SDK)/src src_usb 
-SOURCE_FILES  := $(foreach path, $(SOURCE_PATH),$(shell find $(path) | grep -E "\.c$$|\.s") )
-INCLUDES_PATH := src_usb $(dir $(shell find src_usb/ | grep "\.h$$")) include src $(BOLOS_SDK)/include $(BOLOS_SDK)/include/arm
+SOURCE_PATH   := src $(BOLOS_SDK)/src $(dir $(shell find $(BOLOS_SDK)/lib_stusb* | grep "\.c$$")) $(dir $(shell find $(BOLOS_SDK)/lib_bluenrg* | grep "\.c$$"))
+SOURCE_FILES  := $(foreach path, $(SOURCE_PATH),$(shell find $(path) | grep "\.c$$") )
+INCLUDES_PATH := src_usb $(dir $(shell find $(BOLOS_SDK)/lib_stusb* | grep "\.h$$")) $(dir $(shell find $(BOLOS_SDK)/lib_bluenrg* | grep "\.h$$")) include src $(BOLOS_SDK)/include $(BOLOS_SDK)/include/arm
 
 ### platform definitions
 DEFINES := ST31 gcc __IO=volatile
 
 DEFINES   += OS_IO_SEPROXYHAL IO_SEPROXYHAL_BUFFER_SIZE_B=300
 DEFINES   += HAVE_BAGL HAVE_PRINTF 
-DEFINES   += HAVE_IO_USB HAVE_L4_USBLIB IO_USB_MAX_ENDPOINTS=7 IO_HID_EP_LENGTH=64
+DEFINES   += HAVE_IO_USB HAVE_L4_USBLIB IO_USB_MAX_ENDPOINTS=6 IO_HID_EP_LENGTH=64 HAVE_USB_APDU
+DEFINES   += HAVE_BLE HAVE_BLUENRG HCI_READ_PACKET_NUM_MAX=3 BLUENRG_MS HCI_READ_PACKET_SIZE=72
+#DEFINES  += PRINTF=screen_printf
+DEFINES   += PRINTF\(...\)=
+DEFINES   += UNUSED\(x\)=\(void\)x
 
 ##############
 # Compiler #
@@ -70,10 +77,10 @@ CFLAGS_SHARED   += -mno-unaligned-access
 CFLAGS_SHARED   += -Wno-unused-parameter -Wno-duplicate-decl-specifier
 
 CFLAGS_SHARED   += -fropi --target=armv6m-none-eabi
-#CFLAGS   += -finline-limit-0 -funsigned-bitfields 
 
-CFLAGS_NONOPT := -O0 $(CFLAGS_SHARED)
-CFLAGS_OPT := -O3 $(CFLAGS_SHARED)
+#CFLAGS_SHARED   += -finline-limit-0 -funsigned-bitfields 
+
+CFLAGS += -O3 -Os $(CFLAGS_SHARED)
 
 AS     := $(GCCPATH)/arm-none-eabi-gcc
 AFLAGS += -ggdb2 -O3 -Os -mcpu=cortex-m0 -fno-common -mtune=cortex-m0
@@ -92,7 +99,7 @@ LDFLAGS  += -fno-common -ffunction-sections -fdata-sections -fwhole-program -nos
 LDFLAGS  += -mno-unaligned-access
 #LDFLAGS  += -nodefaultlibs
 #LDFLAGS  += -nostdlib -nostdinc
-LDFLAGS  += -Tscript.ld  -Wl,--gc-sections -Wl,-Map,debug/$(PROG).map,--cref
+LDFLAGS  += -T$(BOLOS_SDK)/script.ld  -Wl,--gc-sections -Wl,-Map,debug/$(PROG).map,--cref
 LDLIBS   += -Wl,--library-path -Wl,$(GCCPATH)/../lib/armv6-m/
 #LDLIBS   += -Wl,--start-group 
 LDLIBS   += -lm -lgcc -lc  
@@ -123,12 +130,12 @@ log = $(if $(strip $(VERBOSE)),$1,@$1)
 default: prepare bin/$(PROG)
 
 load: 
-	python -m ledgerblue.loadApp --appFlags 0xC0 --fileName bin/$(PROG).hex --appName $(APPNAME) 
+	python -m ledgerblue.loadApp --targetId $(TARGET_ID) --apdu --fileName bin/$(PROG).hex --appName $(APPNAME) $(APP_LOAD_PARAMS)
 
 delete:
-	python -m ledgerblue.deleteApp --appName $(APPNAME)
+	python -m ledgerblue.deleteApp --targetId $(TARGET_ID) --appName $(APPNAME)
 
-bin/$(PROG): $(OBJECT_FILES) script.ld
+bin/$(PROG): $(OBJECT_FILES) $(BOLOS_SDK)/script.ld
 	@echo "[LINK] 	$@"
 	$(call log,$(call link_cmdline,$(OBJECT_FILES) $(LDLIBS),$@))
 	$(call log,$(GCCPATH)/arm-none-eabi-objcopy -O ihex -S bin/$(PROG) bin/$(PROG).hex)
@@ -149,6 +156,7 @@ obj/%.o: %.s
 	@echo "[CC]	$@"
 	$(call log,$(call as_cmdline,$(INCLUDES_PATH), $(DEFINES),$<,$@))
 
+
 ### BEGIN GCC COMPILER RULES
 
 # link_cmdline(objects,dest)		Macro that is used to format arguments for the linker
@@ -158,9 +166,7 @@ link_cmdline = $(LD) $(LDFLAGS) -o $(2) $(1)
 dep_cmdline = $(CC) -M $(CFLAGS) $(addprefix -D,$(2)) $(addprefix -I,$(1)) $(3) | sed 's/\($*\)\.o[ :]*/obj\/\1.o: /g' | sed -e 's/[:\t ][^ ]\+\.c//g' > dep/$(basename $(notdir $(4))).d 2>/dev/null
 
 # cc_cmdline(include,defines,src,dest)	Macro that is used to format arguments for the compiler
-cc_cmdline = $(CC) -c $(CFLAGS_NONOPT) $(addprefix -D,$(2)) $(addprefix -I,$(1)) -o $(4) $(3)
-
-cc_cmdline_opt = $(CC) -c $(CFLAGS_OPT) $(addprefix -D,$(2)) $(addprefix -I,$(1)) -o $(4) $(3)
+cc_cmdline = $(CC) -c $(CFLAGS) $(addprefix -D,$(2)) $(addprefix -I,$(1)) -o $(4) $(3)
 
 as_cmdline = $(AS) -c $(AFLAGS) $(addprefix -D,$(2)) $(addprefix -I,$(1)) -o $(4) $(3)
 

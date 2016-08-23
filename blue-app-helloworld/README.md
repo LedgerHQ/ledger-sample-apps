@@ -1,4 +1,4 @@
-# Hello World application for Ledger Blue 
+# Hello World application for Ledger Blue / Ledger Nano S
 
 This application demonstrates the User Interface and Secure Element proxy logic 
 

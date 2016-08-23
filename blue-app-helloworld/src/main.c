@@ -22,12 +22,18 @@
 #include "string.h"
 unsigned char G_io_seproxyhal_spi_buffer[IO_SEPROXYHAL_BUFFER_SIZE_B];
 
-unsigned char usb_enable_request;
-unsigned int current_element;
-
 unsigned int io_seproxyhal_touch_exit(bagl_element_t *e);
 
-static const bagl_element_t const bagl_ui_erase_all[] = {
+ux_state_t ux;
+
+// ********************************************************************************
+// Ledger Blue specific UI
+// ********************************************************************************
+
+static const bagl_element_t const bagl_ui_sample_blue[] = {
+    // type                                 id    x    y    w    h    s  r  fill
+    // fg        bg        font
+    // icon     text,         area, overfgcolor, overbgcolor, tap, over, out
     {{BAGL_RECTANGLE, 0x00, 0, 60, 320, 420, 0, 0, BAGL_FILL, 0xf9f9f9,
       0xf9f9f9, 0, 0},
      NULL,
@@ -37,12 +43,6 @@ static const bagl_element_t const bagl_ui_erase_all[] = {
      NULL,
      NULL,
      NULL},
-};
-
-static const bagl_element_t const bagl_ui_sample[] = {
-    // type                                 id    x    y    w    h    s  r  fill
-    // fg        bg        font
-    // icon     text,         area, overfgcolor, overbgcolor, tap, over, out
     {
         {BAGL_RECTANGLE, 0x00, 0, 0, 320, 60, 0, 0, BAGL_FILL, 0x1d2028,
          0x1d2028, 0, 0},
@@ -69,16 +69,74 @@ static const bagl_element_t const bagl_ui_sample[] = {
      io_seproxyhal_touch_exit,
      NULL,
      NULL},
-
 };
+
+unsigned int bagl_ui_sample_blue_button(unsigned int button_mask,
+                                        unsigned int button_mask_counter) {
+    return 0;
+}
+
+// ********************************************************************************
+// Ledger Nano S specific UI
+// ********************************************************************************
+
+const bagl_element_t bagl_ui_sample_nanos[] = {
+    // type                               userid    x    y   w    h  str rad
+    // fill      fg        bg      fid iid  txt   touchparams...       ]
+    {{BAGL_RECTANGLE, 0x00, 0, 0, 128, 32, 0, 0, BAGL_FILL, 0x000000, 0xFFFFFF,
+      0, 0},
+     NULL,
+     0,
+     0,
+     0,
+     NULL,
+     NULL,
+     NULL},
+
+    {{BAGL_LABELINE, 0x01, 0, 12, 128, 32, 0, 0, 0, 0xFFFFFF, 0x000000,
+      BAGL_FONT_OPEN_SANS_REGULAR_11px | BAGL_FONT_ALIGNMENT_CENTER, 0},
+     "Hello World",
+     0,
+     0,
+     0,
+     NULL,
+     NULL,
+     NULL},
+
+    {{BAGL_ICON, 0x00, 3, 12, 7, 7, 0, 0, 0, 0xFFFFFF, 0x000000, 0,
+      BAGL_GLYPH_ICON_CROSS},
+     NULL,
+     0,
+     0,
+     0,
+     NULL,
+     NULL,
+     NULL},
+    {{BAGL_ICON, 0x00, 117, 13, 8, 6, 0, 0, 0, 0xFFFFFF, 0x000000, 0,
+      BAGL_GLYPH_ICON_CHECK},
+     NULL,
+     0,
+     0,
+     0,
+     NULL,
+     NULL,
+     NULL},
+};
+
+unsigned int bagl_ui_sample_nanos_button(unsigned int button_mask,
+                                         unsigned int button_mask_counter) {
+    switch (button_mask) {
+    case BUTTON_EVT_RELEASED | BUTTON_LEFT | BUTTON_RIGHT: // EXIT
+        io_seproxyhal_touch_exit(NULL);
+        break;
+    }
+    return 0;
+}
 
 unsigned int io_seproxyhal_touch_exit(bagl_element_t *e) {
     // Go back to the dashboard
     os_sched_exit(0);
     return 0;
-}
-
-void reset(void) {
 }
 
 unsigned short io_exchange_al(unsigned char channel, unsigned short tx_len) {
@@ -107,6 +165,15 @@ unsigned short io_exchange_al(unsigned char channel, unsigned short tx_len) {
     return 0;
 }
 
+void ui_idle(void) {
+    if (os_seph_features() &
+        SEPROXYHAL_TAG_SESSION_START_EVENT_FEATURE_SCREEN_BIG) {
+        UX_DISPLAY(bagl_ui_sample_blue, NULL);
+    } else {
+        UX_DISPLAY(bagl_ui_sample_nanos, NULL);
+    }
+}
+
 void sample_main(void) {
     volatile unsigned int rx = 0;
     volatile unsigned int tx = 0;
@@ -127,6 +194,7 @@ void sample_main(void) {
                 tx = 0; // ensure no race in catch_other if io_exchange throws
                         // an error
                 rx = io_exchange(CHANNEL_APDU | flags, rx);
+                flags = 0;
 
                 // no apdu received, well, reset the session, and reset the
                 // bootloader configuration
@@ -187,62 +255,43 @@ return_to_dashboard:
     return;
 }
 
-unsigned int element_displayed;
 void io_seproxyhal_display(const bagl_element_t *element) {
-    element_displayed = 1;
-    return io_seproxyhal_display_default(element);
+    io_seproxyhal_display_default((bagl_element_t *)element);
 }
 
 unsigned char io_event(unsigned char channel) {
-    bagl_component_t c;
     // nothing done with the event, throw an error on the transport layer if
     // needed
-    unsigned int offset = 0;
 
     // can't have more than one tag in the reply, not supported yet.
-    element_displayed = 0;
     switch (G_io_seproxyhal_spi_buffer[0]) {
     case SEPROXYHAL_TAG_FINGER_EVENT:
-        io_seproxyhal_touch(bagl_ui_sample,
-                            sizeof(bagl_ui_sample) / sizeof(bagl_element_t),
-                            (G_io_seproxyhal_spi_buffer[4] << 8) |
-                                (G_io_seproxyhal_spi_buffer[5] & 0xFF),
-                            (G_io_seproxyhal_spi_buffer[6] << 8) |
-                                (G_io_seproxyhal_spi_buffer[7] & 0xFF),
-                            G_io_seproxyhal_spi_buffer[3]);
-        // no repaint here, never !
-        if (!element_displayed) {
-            goto general_status;
-        }
+        UX_FINGER_EVENT(G_io_seproxyhal_spi_buffer);
+        break;
+
+    case SEPROXYHAL_TAG_BUTTON_PUSH_EVENT: // for Nano S
+        UX_BUTTON_PUSH_EVENT(G_io_seproxyhal_spi_buffer);
         break;
 
     case SEPROXYHAL_TAG_DISPLAY_PROCESSED_EVENT:
-        if (current_element <
-            (sizeof(bagl_ui_sample) / sizeof(bagl_element_t))) {
-            io_seproxyhal_display(&bagl_ui_sample[current_element++]);
-            break;
+        if (UX_DISPLAYED()) {
+            // TODO perform actions after all screen elements have been
+            // displayed
+        } else {
+            UX_DISPLAY_PROCESSED_EVENT();
         }
-        if (usb_enable_request) {
-            io_usb_enable(1);
-            usb_enable_request = 0;
-        }
-        goto general_status;
+        break;
 
     // unknown events are acknowledged
     default:
-    general_status:
-        // send a general status last command
-        offset = 0;
-        G_io_seproxyhal_spi_buffer[offset++] = SEPROXYHAL_TAG_GENERAL_STATUS;
-        G_io_seproxyhal_spi_buffer[offset++] = 0;
-        G_io_seproxyhal_spi_buffer[offset++] = 2;
-        G_io_seproxyhal_spi_buffer[offset++] =
-            SEPROXYHAL_TAG_GENERAL_STATUS_LAST_COMMAND >> 8;
-        G_io_seproxyhal_spi_buffer[offset++] =
-            SEPROXYHAL_TAG_GENERAL_STATUS_LAST_COMMAND;
-        io_seproxyhal_spi_send(G_io_seproxyhal_spi_buffer, offset);
         break;
     }
+
+    // close the event if not done previously (by a display or whatever)
+    if (!io_seproxyhal_spi_is_status_sent()) {
+        io_seproxyhal_general_status();
+    }
+
     // command has been processed, DO NOT reset the current APDU transport
     return 1;
 }
@@ -251,8 +300,7 @@ __attribute__((section(".boot"))) int main(void) {
     // exit critical section
     __asm volatile("cpsie i");
 
-    current_element = 0;
-    usb_enable_request = 0;
+    UX_INIT();
 
     // ensure exception will work as planned
     os_boot();
@@ -263,14 +311,19 @@ __attribute__((section(".boot"))) int main(void) {
 
             screen_printf("HelloApp\n");
 
-            // send BLE power on (default parameters)
-            G_io_seproxyhal_spi_buffer[0] = SEPROXYHAL_TAG_BLE_RADIO_POWER;
-            G_io_seproxyhal_spi_buffer[1] = 0;
-            G_io_seproxyhal_spi_buffer[2] = 1;
-            G_io_seproxyhal_spi_buffer[3] = 3;
-            io_seproxyhal_spi_send(G_io_seproxyhal_spi_buffer, 4);
-            usb_enable_request = 1;
-            io_seproxyhal_display(&bagl_ui_erase_all[0]);
+#ifdef LISTEN_BLE
+            if (os_seph_features() &
+                SEPROXYHAL_TAG_SESSION_START_EVENT_FEATURE_BLE) {
+                BLE_power(0, NULL);
+                // restart IOs
+                BLE_power(1, NULL);
+            }
+#endif
+
+            USB_power(0);
+            USB_power(1);
+
+            ui_idle();
 
             sample_main();
         }
