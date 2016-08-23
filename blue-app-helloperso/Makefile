@@ -16,8 +16,8 @@
 #*******************************************************************************
 
 APPNAME = HELLOPSO
-TARGET_ID = 0x31100002 #Nano S
-#TARGET_ID = 0x31000002 #Blue
+#TARGET_ID = 0x31100002 #Nano S
+TARGET_ID = 0x31000002 #Blue
 APP_LOAD_PARAMS=--appFlags 0x40 --icon ""
 
 
