@@ -585,7 +585,7 @@ unsigned char io_event(unsigned char channel) {
         } else {
             if (UX_DISPLAYED()) {
             } else {
-                UX_DISPLAY_PROCESSED_EVENT();
+                UX_DISPLAY_NEXT_ELEMENT();
             }
         }
         break;
