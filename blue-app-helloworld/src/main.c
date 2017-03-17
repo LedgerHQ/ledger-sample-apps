@@ -278,7 +278,7 @@ unsigned char io_event(unsigned char channel) {
             // TODO perform actions after all screen elements have been
             // displayed
         } else {
-            UX_DISPLAY_PROCESSED_EVENT();
+            UX_DISPLAY_NEXT_ELEMENT();
         }
         break;
 
