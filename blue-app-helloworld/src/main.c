@@ -19,10 +19,10 @@
 #include "cx.h"
 
 #include "os_io_seproxyhal.h"
-#include "string.h"
+
 unsigned char G_io_seproxyhal_spi_buffer[IO_SEPROXYHAL_BUFFER_SIZE_B];
 
-unsigned int io_seproxyhal_touch_exit(bagl_element_t *e);
+static const bagl_element_t *io_seproxyhal_touch_exit(const bagl_element_t *e);
 
 ux_state_t ux;
 
@@ -30,49 +30,68 @@ ux_state_t ux;
 // Ledger Blue specific UI
 // ********************************************************************************
 
-static const bagl_element_t const bagl_ui_sample_blue[] = {
-    // type                                 id    x    y    w    h    s  r  fill
-    // fg        bg        font
-    // icon     text,         area, overfgcolor, overbgcolor, tap, over, out
-    {{BAGL_RECTANGLE, 0x00, 0, 60, 320, 420, 0, 0, BAGL_FILL, 0xf9f9f9,
-      0xf9f9f9, 0, 0},
-     NULL,
-     0,
-     0,
-     0,
-     NULL,
-     NULL,
-     NULL},
+static const bagl_element_t bagl_ui_sample_blue[] = {
+    // {
+    //     {type, userid, x, y, width, height, stroke, radius, fill, fgcolor,
+    //      bgcolor, font_id, icon_id},
+    //     text,
+    //     touch_area_brim,
+    //     overfgcolor,
+    //     overbgcolor,
+    //     tap,
+    //     out,
+    //     over,
+    // },
+    {
+        {BAGL_RECTANGLE, 0x00, 0, 60, 320, 420, 0, 0, BAGL_FILL, 0xf9f9f9,
+         0xf9f9f9, 0, 0},
+        NULL,
+        0,
+        0,
+        0,
+        NULL,
+        NULL,
+        NULL,
+    },
     {
         {BAGL_RECTANGLE, 0x00, 0, 0, 320, 60, 0, 0, BAGL_FILL, 0x1d2028,
          0x1d2028, 0, 0},
+        NULL,
+        0,
+        0,
+        0,
+        NULL,
+        NULL,
+        NULL,
     },
-    {{BAGL_LABEL, 0x00, 20, 0, 320, 60, 0, 0, BAGL_FILL, 0xFFFFFF, 0x1d2028,
-      BAGL_FONT_OPEN_SANS_LIGHT_14px | BAGL_FONT_ALIGNMENT_MIDDLE, 0},
-     "Hello World",
-     0,
-     0,
-     0,
-     NULL,
-     NULL,
-     NULL},
-
-    {{BAGL_BUTTON | BAGL_FLAG_TOUCHABLE, 0x00, 165, 225, 120, 40, 0, 6,
-      BAGL_FILL, 0x41ccb4, 0xF9F9F9,
-      BAGL_FONT_OPEN_SANS_LIGHT_14px | BAGL_FONT_ALIGNMENT_CENTER |
-          BAGL_FONT_ALIGNMENT_MIDDLE,
-      0},
-     "EXIT",
-     0,
-     0x37ae99,
-     0xF9F9F9,
-     io_seproxyhal_touch_exit,
-     NULL,
-     NULL},
+    {
+        {BAGL_LABEL, 0x00, 20, 0, 320, 60, 0, 0, BAGL_FILL, 0xFFFFFF, 0x1d2028,
+         BAGL_FONT_OPEN_SANS_LIGHT_14px | BAGL_FONT_ALIGNMENT_MIDDLE, 0},
+        "Hello World",
+        0,
+        0,
+        0,
+        NULL,
+        NULL,
+        NULL,
+    },
+    {
+        {BAGL_BUTTON | BAGL_FLAG_TOUCHABLE, 0x00, 165, 225, 120, 40, 0, 6,
+         BAGL_FILL, 0x41ccb4, 0xF9F9F9, BAGL_FONT_OPEN_SANS_LIGHT_14px |
+         BAGL_FONT_ALIGNMENT_CENTER | BAGL_FONT_ALIGNMENT_MIDDLE, 0},
+        "EXIT",
+        0,
+        0x37ae99,
+        0xF9F9F9,
+        io_seproxyhal_touch_exit,
+        NULL,
+        NULL,
+    },
 };
 
-unsigned int bagl_ui_sample_blue_button(unsigned int button_mask,
-                                        unsigned int button_mask_counter) {
+static unsigned int
+bagl_ui_sample_blue_button(unsigned int button_mask,
+                           unsigned int button_mask_counter) {
     return 0;
 }
 
@@ -80,51 +99,67 @@ unsigned int bagl_ui_sample_blue_button(unsigned int button_mask,
 // Ledger Nano S specific UI
 // ********************************************************************************
 
-const bagl_element_t bagl_ui_sample_nanos[] = {
-    // type                               userid    x    y   w    h  str rad
-    // fill      fg        bg      fid iid  txt   touchparams...       ]
-    {{BAGL_RECTANGLE, 0x00, 0, 0, 128, 32, 0, 0, BAGL_FILL, 0x000000, 0xFFFFFF,
-      0, 0},
-     NULL,
-     0,
-     0,
-     0,
-     NULL,
-     NULL,
-     NULL},
-
-    {{BAGL_LABELINE, 0x01, 0, 12, 128, 32, 0, 0, 0, 0xFFFFFF, 0x000000,
-      BAGL_FONT_OPEN_SANS_REGULAR_11px | BAGL_FONT_ALIGNMENT_CENTER, 0},
-     "Hello World",
-     0,
-     0,
-     0,
-     NULL,
-     NULL,
-     NULL},
-
-    {{BAGL_ICON, 0x00, 3, 12, 7, 7, 0, 0, 0, 0xFFFFFF, 0x000000, 0,
-      BAGL_GLYPH_ICON_CROSS},
-     NULL,
-     0,
-     0,
-     0,
-     NULL,
-     NULL,
-     NULL},
-    {{BAGL_ICON, 0x00, 117, 13, 8, 6, 0, 0, 0, 0xFFFFFF, 0x000000, 0,
-      BAGL_GLYPH_ICON_CHECK},
-     NULL,
-     0,
-     0,
-     0,
-     NULL,
-     NULL,
-     NULL},
+static const bagl_element_t bagl_ui_sample_nanos[] = {
+    // {
+    //     {type, userid, x, y, width, height, stroke, radius, fill, fgcolor,
+    //      bgcolor, font_id, icon_id},
+    //     text,
+    //     touch_area_brim,
+    //     overfgcolor,
+    //     overbgcolor,
+    //     tap,
+    //     out,
+    //     over,
+    // },
+    {
+        {BAGL_RECTANGLE, 0x00, 0, 0, 128, 32, 0, 0, BAGL_FILL, 0x000000,
+         0xFFFFFF, 0, 0},
+        NULL,
+        0,
+        0,
+        0,
+        NULL,
+        NULL,
+        NULL,
+    },
+    {
+        {BAGL_LABELINE, 0x01, 0, 12, 128, 32, 0, 0, 0, 0xFFFFFF, 0x000000,
+         BAGL_FONT_OPEN_SANS_REGULAR_11px | BAGL_FONT_ALIGNMENT_CENTER, 0},
+        "Hello World",
+        0,
+        0,
+        0,
+        NULL,
+        NULL,
+        NULL,
+    },
+    {
+        {BAGL_ICON, 0x00, 3, 12, 7, 7, 0, 0, 0, 0xFFFFFF, 0x000000, 0,
+         BAGL_GLYPH_ICON_CROSS},
+        NULL,
+        0,
+        0,
+        0,
+        NULL,
+        NULL,
+        NULL,
+    },
+    {
+        {BAGL_ICON, 0x00, 117, 13, 8, 6, 0, 0, 0, 0xFFFFFF, 0x000000, 0,
+         BAGL_GLYPH_ICON_CHECK},
+        NULL,
+        0,
+        0,
+        0,
+        NULL,
+        NULL,
+        NULL,
+    },
 };
 
-unsigned int bagl_ui_sample_nanos_button(unsigned int button_mask,
-                                         unsigned int button_mask_counter) {
+static unsigned int
+bagl_ui_sample_nanos_button(unsigned int button_mask,
+                            unsigned int button_mask_counter) {
     switch (button_mask) {
     case BUTTON_EVT_RELEASED | BUTTON_LEFT | BUTTON_RIGHT: // EXIT
         io_seproxyhal_touch_exit(NULL);
@@ -133,10 +168,10 @@ unsigned int bagl_ui_sample_nanos_button(unsigned int button_mask,
     return 0;
 }
 
-unsigned int io_seproxyhal_touch_exit(bagl_element_t *e) {
+static const bagl_element_t *io_seproxyhal_touch_exit(const bagl_element_t *e) {
     // Go back to the dashboard
     os_sched_exit(0);
-    return 0;
+    return NULL;
 }
 
 unsigned short io_exchange_al(unsigned char channel, unsigned short tx_len) {
@@ -165,7 +200,7 @@ unsigned short io_exchange_al(unsigned char channel, unsigned short tx_len) {
     return 0;
 }
 
-void ui_idle(void) {
+static void ui_idle(void) {
     if (os_seph_features() &
         SEPROXYHAL_TAG_SESSION_START_EVENT_FEATURE_SCREEN_BIG) {
         UX_DISPLAY(bagl_ui_sample_blue, NULL);
@@ -174,7 +209,7 @@ void ui_idle(void) {
     }
 }
 
-void sample_main(void) {
+static void sample_main(void) {
     volatile unsigned int rx = 0;
     volatile unsigned int tx = 0;
     volatile unsigned int flags = 0;
@@ -278,7 +313,7 @@ unsigned char io_event(unsigned char channel) {
             // TODO perform actions after all screen elements have been
             // displayed
         } else {
-            UX_DISPLAY_PROCESSED_EVENT();
+            UX_DISPLAYED_EVENT();
         }
         break;
 
@@ -308,8 +343,6 @@ __attribute__((section(".boot"))) int main(void) {
     BEGIN_TRY {
         TRY {
             io_seproxyhal_init();
-
-            screen_printf("HelloApp\n");
 
 #ifdef LISTEN_BLE
             if (os_seph_features() &
