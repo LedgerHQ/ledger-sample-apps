@@ -19,12 +19,12 @@
 #include "cx.h"
 
 #include "os_io_seproxyhal.h"
-#include "string.h"
+
 unsigned char G_io_seproxyhal_spi_buffer[IO_SEPROXYHAL_BUFFER_SIZE_B];
 
-unsigned int current_text_pos; // parsing cursor in the text to display
-unsigned int text_y;           // current location of the displayed text
-unsigned char hashTainted;     // notification to restart the hash
+static unsigned int current_text_pos; // parsing cursor in the text to display
+static unsigned int text_y;           // current location of the displayed text
+static unsigned char hashTainted;     // notification to restart the hash
 
 // UI currently displayed
 enum UI_STATE { UI_IDLE, UI_TEXT, UI_APPROVAL };
@@ -33,14 +33,15 @@ enum UI_STATE uiState;
 
 ux_state_t ux;
 
-unsigned int io_seproxyhal_touch_exit(bagl_element_t *e);
-unsigned int io_seproxyhal_touch_approve(bagl_element_t *e);
-unsigned int io_seproxyhal_touch_deny(bagl_element_t *e);
+static const bagl_element_t *io_seproxyhal_touch_exit(const bagl_element_t *e);
+static const bagl_element_t*
+io_seproxyhal_touch_approve(const bagl_element_t *e);
+static const bagl_element_t *io_seproxyhal_touch_deny(const bagl_element_t *e);
 
-void ui_idle(void);
-unsigned char display_text_part(void);
-void ui_text(void);
-void ui_approval(void);
+static void ui_idle(void);
+static unsigned char display_text_part(void);
+static void ui_text(void);
+static void ui_approval(void);
 
 #define MAX_CHARS_PER_LINE 49
 #define DEFAULT_FONT BAGL_FONT_OPEN_SANS_LIGHT_13px | BAGL_FONT_ALIGNMENT_LEFT
@@ -53,141 +54,187 @@ void ui_approval(void);
 #define P1_LAST 0x80
 #define P1_MORE 0x00
 
-const cx_ecfp_private_key_t N_privateKey; // private key in flash. const and N_
-                                          // variable name are mandatory here
-const unsigned char N_initialized; // initialization marker in flash. const and
-                                   // N_ variable name are mandatory here
+// private key in flash. const and N_ variable name are mandatory here
+static const cx_ecfp_private_key_t N_privateKey;
+// initialization marker in flash. const and N_ variable name are mandatory here
+static const unsigned char N_initialized;
 
-char lineBuffer[50];
-cx_sha256_t hash;
+static char lineBuffer[50];
+static cx_sha256_t hash;
+
+#ifdef TARGET_BLUE
 
 // UI to approve or deny the signature proposal
 static const bagl_element_t const bagl_ui_approval_blue[] = {
-
-    {{BAGL_BUTTON | BAGL_FLAG_TOUCHABLE, 0x00, 190, 215, 120, 40, 0, 6,
-      BAGL_FILL, 0x41ccb4, 0xF9F9F9,
-      BAGL_FONT_OPEN_SANS_LIGHT_14px | BAGL_FONT_ALIGNMENT_CENTER |
-          BAGL_FONT_ALIGNMENT_MIDDLE,
-      0},
-     "Deny",
-     0,
-     0x37ae99,
-     0xF9F9F9,
-     io_seproxyhal_touch_deny,
-     NULL,
-     NULL},
-
-    {{BAGL_BUTTON | BAGL_FLAG_TOUCHABLE, 0x00, 190, 265, 120, 40, 0, 6,
-      BAGL_FILL, 0x41ccb4, 0xF9F9F9,
-      BAGL_FONT_OPEN_SANS_LIGHT_14px | BAGL_FONT_ALIGNMENT_CENTER |
-          BAGL_FONT_ALIGNMENT_MIDDLE,
-      0},
-     "Approve",
-     0,
-     0x37ae99,
-     0xF9F9F9,
-     io_seproxyhal_touch_approve,
-     NULL,
-     NULL}
-
+    // {
+    //     {type, userid, x, y, width, height, stroke, radius, fill, fgcolor,
+    //      bgcolor, font_id, icon_id},
+    //     text,
+    //     touch_area_brim,
+    //     overfgcolor,
+    //     overbgcolor,
+    //     tap,
+    //     out,
+    //     over,
+    // },
+    {
+        {BAGL_BUTTON | BAGL_FLAG_TOUCHABLE, 0x00, 190, 215, 120, 40, 0, 6,
+         BAGL_FILL, 0x41ccb4, 0xF9F9F9, BAGL_FONT_OPEN_SANS_LIGHT_14px |
+         BAGL_FONT_ALIGNMENT_CENTER | BAGL_FONT_ALIGNMENT_MIDDLE, 0},
+        "Deny",
+        0,
+        0x37ae99,
+        0xF9F9F9,
+        io_seproxyhal_touch_deny,
+        NULL,
+        NULL,
+    },
+    {
+        {BAGL_BUTTON | BAGL_FLAG_TOUCHABLE, 0x00, 190, 265, 120, 40, 0, 6,
+         BAGL_FILL, 0x41ccb4, 0xF9F9F9, BAGL_FONT_OPEN_SANS_LIGHT_14px |
+         BAGL_FONT_ALIGNMENT_CENTER | BAGL_FONT_ALIGNMENT_MIDDLE, 0},
+        "Approve",
+        0,
+        0x37ae99,
+        0xF9F9F9,
+        io_seproxyhal_touch_approve,
+        NULL,
+        NULL,
+    },
 };
 
-unsigned int bagl_ui_approval_blue_button(unsigned int button_mask,
-                                          unsigned int button_mask_counter) {
+static unsigned int
+bagl_ui_approval_blue_button(unsigned int button_mask,
+                             unsigned int button_mask_counter) {
     return 0;
 }
 
 // UI displayed when no signature proposal has been received
-static const bagl_element_t const bagl_ui_idle_blue[] = {
-
-    {{BAGL_RECTANGLE, 0x00, 0, 60, 320, 420, 0, 0, BAGL_FILL, 0xf9f9f9,
-      0xf9f9f9, 0, 0},
-     NULL,
-     0,
-     0,
-     0,
-     NULL,
-     NULL,
-     NULL},
-
+static const bagl_element_t bagl_ui_idle_blue[] = {
+    // {
+    //     {type, userid, x, y, width, height, stroke, radius, fill, fgcolor,
+    //      bgcolor, font_id, icon_id},
+    //     text,
+    //     touch_area_brim,
+    //     overfgcolor,
+    //     overbgcolor,
+    //     tap,
+    //     out,
+    //     over,
+    // },
+    {
+        {BAGL_RECTANGLE, 0x00, 0, 60, 320, 420, 0, 0, BAGL_FILL, 0xf9f9f9,
+         0xf9f9f9, 0, 0},
+        NULL,
+        0,
+        0,
+        0,
+        NULL,
+        NULL,
+        NULL,
+    },
     {
         {BAGL_RECTANGLE, 0x00, 0, 0, 320, 60, 0, 0, BAGL_FILL, 0x1d2028,
          0x1d2028, 0, 0},
+        NULL,
+        0,
+        0,
+        0,
+        NULL,
+        NULL,
+        NULL,
     },
-
-    {{BAGL_LABEL, 0x00, 20, 0, 320, 60, 0, 0, BAGL_FILL, 0xFFFFFF, 0x1d2028,
-      BAGL_FONT_OPEN_SANS_LIGHT_14px | BAGL_FONT_ALIGNMENT_MIDDLE, 0},
-     "Sample Sign",
-     0,
-     0,
-     0,
-     NULL,
-     NULL,
-     NULL},
-
-    {{BAGL_BUTTON | BAGL_FLAG_TOUCHABLE, 0x00, 190, 215, 120, 40, 0, 6,
-      BAGL_FILL, 0x41ccb4, 0xF9F9F9,
-      BAGL_FONT_OPEN_SANS_LIGHT_14px | BAGL_FONT_ALIGNMENT_CENTER |
-          BAGL_FONT_ALIGNMENT_MIDDLE,
-      0},
-     "Exit",
-     0,
-     0x37ae99,
-     0xF9F9F9,
-     io_seproxyhal_touch_exit,
-     NULL,
-     NULL}
-
+    {
+        {BAGL_LABEL, 0x00, 20, 0, 320, 60, 0, 0, BAGL_FILL, 0xFFFFFF, 0x1d2028,
+         BAGL_FONT_OPEN_SANS_LIGHT_14px | BAGL_FONT_ALIGNMENT_MIDDLE, 0},
+        "Sample Sign",
+        0,
+        0,
+        0,
+        NULL,
+        NULL,
+        NULL,
+    },
+    {
+        {BAGL_BUTTON | BAGL_FLAG_TOUCHABLE, 0x00, 190, 215, 120, 40, 0, 6,
+         BAGL_FILL, 0x41ccb4, 0xF9F9F9, BAGL_FONT_OPEN_SANS_LIGHT_14px |
+         BAGL_FONT_ALIGNMENT_CENTER | BAGL_FONT_ALIGNMENT_MIDDLE, 0},
+        "Exit",
+        0,
+        0x37ae99,
+        0xF9F9F9,
+        io_seproxyhal_touch_exit,
+        NULL,
+        NULL,
+    },
 };
 
-unsigned int bagl_ui_idle_blue_button(unsigned int button_mask,
-                                      unsigned int button_mask_counter) {
+static unsigned int
+bagl_ui_idle_blue_button(unsigned int button_mask,
+                         unsigned int button_mask_counter) {
     return 0;
 }
 
 static bagl_element_t bagl_ui_text[1];
 
-unsigned int bagl_ui_text_button(unsigned int button_mask,
-                                 unsigned int button_mask_counter) {
+static unsigned int
+bagl_ui_text_button(unsigned int button_mask,
+                    unsigned int button_mask_counter) {
     return 0;
 }
 
-const bagl_element_t bagl_ui_idle_nanos[] = {
-    // type                               userid    x    y   w    h  str rad
-    // fill      fg        bg      fid iid  txt   touchparams...       ]
-    {{BAGL_RECTANGLE, 0x00, 0, 0, 128, 32, 0, 0, BAGL_FILL, 0x000000, 0xFFFFFF,
-      0, 0},
-     NULL,
-     0,
-     0,
-     0,
-     NULL,
-     NULL,
-     NULL},
+#else
 
-    {{BAGL_LABELINE, 0x02, 0, 12, 128, 11, 0, 0, 0, 0xFFFFFF, 0x000000,
-      BAGL_FONT_OPEN_SANS_REGULAR_11px | BAGL_FONT_ALIGNMENT_CENTER, 0},
-     "Waiting for message",
-     0,
-     0,
-     0,
-     NULL,
-     NULL,
-     NULL},
-
-    {{BAGL_ICON, 0x00, 3, 12, 7, 7, 0, 0, 0, 0xFFFFFF, 0x000000, 0,
-      BAGL_GLYPH_ICON_CROSS},
-     NULL,
-     0,
-     0,
-     0,
-     NULL,
-     NULL,
-     NULL},
+static const bagl_element_t bagl_ui_idle_nanos[] = {
+    // {
+    //     {type, userid, x, y, width, height, stroke, radius, fill, fgcolor,
+    //      bgcolor, font_id, icon_id},
+    //     text,
+    //     touch_area_brim,
+    //     overfgcolor,
+    //     overbgcolor,
+    //     tap,
+    //     out,
+    //     over,
+    // },
+    {
+        {BAGL_RECTANGLE, 0x00, 0, 0, 128, 32, 0, 0, BAGL_FILL, 0x000000,
+         0xFFFFFF, 0, 0},
+        NULL,
+        0,
+        0,
+        0,
+        NULL,
+        NULL,
+        NULL,
+    },
+    {
+        {BAGL_LABELINE, 0x02, 0, 12, 128, 11, 0, 0, 0, 0xFFFFFF, 0x000000,
+         BAGL_FONT_OPEN_SANS_REGULAR_11px | BAGL_FONT_ALIGNMENT_CENTER, 0},
+        "Waiting for message",
+        0,
+        0,
+        0,
+        NULL,
+        NULL,
+        NULL,
+    },
+    {
+        {BAGL_ICON, 0x00, 3, 12, 7, 7, 0, 0, 0, 0xFFFFFF, 0x000000, 0,
+         BAGL_GLYPH_ICON_CROSS},
+        NULL,
+        0,
+        0,
+        0,
+        NULL,
+        NULL,
+        NULL,
+    },
 };
 
-unsigned int bagl_ui_idle_nanos_button(unsigned int button_mask,
-                                       unsigned int button_mask_counter) {
+static unsigned int
+bagl_ui_idle_nanos_button(unsigned int button_mask,
+                          unsigned int button_mask_counter) {
     switch (button_mask) {
     case BUTTON_EVT_RELEASED | BUTTON_LEFT:
     case BUTTON_EVT_RELEASED | BUTTON_LEFT | BUTTON_RIGHT:
@@ -198,51 +245,67 @@ unsigned int bagl_ui_idle_nanos_button(unsigned int button_mask,
     return 0;
 }
 
-const bagl_element_t bagl_ui_approval_nanos[] = {
-    // type                               userid    x    y   w    h  str rad
-    // fill      fg        bg      fid iid  txt   touchparams...       ]
-    {{BAGL_RECTANGLE, 0x00, 0, 0, 128, 32, 0, 0, BAGL_FILL, 0x000000, 0xFFFFFF,
-      0, 0},
-     NULL,
-     0,
-     0,
-     0,
-     NULL,
-     NULL,
-     NULL},
-
-    {{BAGL_LABELINE, 0x02, 0, 12, 128, 11, 0, 0, 0, 0xFFFFFF, 0x000000,
-      BAGL_FONT_OPEN_SANS_REGULAR_11px | BAGL_FONT_ALIGNMENT_CENTER, 0},
-     "Sign message",
-     0,
-     0,
-     0,
-     NULL,
-     NULL,
-     NULL},
-
-    {{BAGL_ICON, 0x00, 3, 12, 7, 7, 0, 0, 0, 0xFFFFFF, 0x000000, 0,
-      BAGL_GLYPH_ICON_CROSS},
-     NULL,
-     0,
-     0,
-     0,
-     NULL,
-     NULL,
-     NULL},
-    {{BAGL_ICON, 0x00, 117, 13, 8, 6, 0, 0, 0, 0xFFFFFF, 0x000000, 0,
-      BAGL_GLYPH_ICON_CHECK},
-     NULL,
-     0,
-     0,
-     0,
-     NULL,
-     NULL,
-     NULL},
+static const bagl_element_t bagl_ui_approval_nanos[] = {
+    // {
+    //     {type, userid, x, y, width, height, stroke, radius, fill, fgcolor,
+    //      bgcolor, font_id, icon_id},
+    //     text,
+    //     touch_area_brim,
+    //     overfgcolor,
+    //     overbgcolor,
+    //     tap,
+    //     out,
+    //     over,
+    // },
+    {
+        {BAGL_RECTANGLE, 0x00, 0, 0, 128, 32, 0, 0, BAGL_FILL, 0x000000,
+         0xFFFFFF, 0, 0},
+        NULL,
+        0,
+        0,
+        0,
+        NULL,
+        NULL,
+        NULL,
+    },
+    {
+        {BAGL_LABELINE, 0x02, 0, 12, 128, 11, 0, 0, 0, 0xFFFFFF, 0x000000,
+         BAGL_FONT_OPEN_SANS_REGULAR_11px | BAGL_FONT_ALIGNMENT_CENTER, 0},
+        "Sign message",
+        0,
+        0,
+        0,
+        NULL,
+        NULL,
+        NULL,
+    },
+    {
+        {BAGL_ICON, 0x00, 3, 12, 7, 7, 0, 0, 0, 0xFFFFFF, 0x000000, 0,
+         BAGL_GLYPH_ICON_CROSS},
+        NULL,
+        0,
+        0,
+        0,
+        NULL,
+        NULL,
+        NULL,
+    },
+    {
+        {BAGL_ICON, 0x00, 117, 13, 8, 6, 0, 0, 0, 0xFFFFFF, 0x000000, 0,
+         BAGL_GLYPH_ICON_CHECK},
+        NULL,
+        0,
+        0,
+        0,
+        NULL,
+        NULL,
+        NULL,
+    },
 };
 
-unsigned int bagl_ui_approval_nanos_button(unsigned int button_mask,
-                                           unsigned int button_mask_counter) {
+static unsigned int
+bagl_ui_approval_nanos_button(unsigned int button_mask,
+                              unsigned int button_mask_counter) {
     switch (button_mask) {
     case BUTTON_EVT_RELEASED | BUTTON_RIGHT:
         io_seproxyhal_touch_approve(NULL);
@@ -255,60 +318,76 @@ unsigned int bagl_ui_approval_nanos_button(unsigned int button_mask,
     return 0;
 }
 
-const bagl_element_t bagl_ui_text_review_nanos[] = {
-    // type                               userid    x    y   w    h  str rad
-    // fill      fg        bg      fid iid  txt   touchparams...       ]
-    {{BAGL_RECTANGLE, 0x00, 0, 0, 128, 32, 0, 0, BAGL_FILL, 0x000000, 0xFFFFFF,
-      0, 0},
-     NULL,
-     0,
-     0,
-     0,
-     NULL,
-     NULL,
-     NULL},
-
-    {{BAGL_LABELINE, 0x02, 0, 12, 128, 11, 0, 0, 0, 0xFFFFFF, 0x000000,
-      BAGL_FONT_OPEN_SANS_REGULAR_11px | BAGL_FONT_ALIGNMENT_CENTER, 0},
-     "Verify text",
-     0,
-     0,
-     0,
-     NULL,
-     NULL,
-     NULL},
-
-    {{BAGL_LABELINE, 0x02, 23, 26, 82, 11, 0x80 | 10, 0, 0, 0xFFFFFF, 0x000000,
-      BAGL_FONT_OPEN_SANS_EXTRABOLD_11px | BAGL_FONT_ALIGNMENT_CENTER, 26},
-     lineBuffer,
-     0,
-     0,
-     0,
-     NULL,
-     NULL,
-     NULL},
-
-    {{BAGL_ICON, 0x00, 3, 12, 7, 7, 0, 0, 0, 0xFFFFFF, 0x000000, 0,
-      BAGL_GLYPH_ICON_CROSS},
-     NULL,
-     0,
-     0,
-     0,
-     NULL,
-     NULL,
-     NULL},
-    {{BAGL_ICON, 0x00, 117, 13, 8, 6, 0, 0, 0, 0xFFFFFF, 0x000000, 0,
-      BAGL_GLYPH_ICON_CHECK},
-     NULL,
-     0,
-     0,
-     0,
-     NULL,
-     NULL,
-     NULL},
+static const bagl_element_t bagl_ui_text_review_nanos[] = {
+    // {
+    //     {type, userid, x, y, width, height, stroke, radius, fill, fgcolor,
+    //      bgcolor, font_id, icon_id},
+    //     text,
+    //     touch_area_brim,
+    //     overfgcolor,
+    //     overbgcolor,
+    //     tap,
+    //     out,
+    //     over,
+    // },
+    {
+        {BAGL_RECTANGLE, 0x00, 0, 0, 128, 32, 0, 0, BAGL_FILL, 0x000000,
+         0xFFFFFF, 0, 0},
+        NULL,
+        0,
+        0,
+        0,
+        NULL,
+        NULL,
+        NULL,
+    },
+    {
+        {BAGL_LABELINE, 0x02, 0, 12, 128, 11, 0, 0, 0, 0xFFFFFF, 0x000000,
+         BAGL_FONT_OPEN_SANS_REGULAR_11px | BAGL_FONT_ALIGNMENT_CENTER, 0},
+        "Verify text",
+        0,
+        0,
+        0,
+        NULL,
+        NULL,
+        NULL,
+    },
+    {
+        {BAGL_LABELINE, 0x02, 23, 26, 82, 11, 0x80 | 10, 0, 0, 0xFFFFFF,
+         0x000000, BAGL_FONT_OPEN_SANS_EXTRABOLD_11px | BAGL_FONT_ALIGNMENT_CENTER, 26},
+        lineBuffer,
+        0,
+        0,
+        0,
+        NULL,
+        NULL,
+        NULL,
+    },
+    {
+        {BAGL_ICON, 0x00, 3, 12, 7, 7, 0, 0, 0, 0xFFFFFF, 0x000000, 0,
+         BAGL_GLYPH_ICON_CROSS},
+        NULL,
+        0,
+        0,
+        0,
+        NULL,
+        NULL,
+        NULL,
+    },
+    {
+        {BAGL_ICON, 0x00, 117, 13, 8, 6, 0, 0, 0, 0xFFFFFF, 0x000000, 0,
+         BAGL_GLYPH_ICON_CHECK},
+        NULL,
+        0,
+        0,
+        0,
+        NULL,
+        NULL,
+        NULL,
+    },
 };
 
-unsigned int
+static unsigned int
 bagl_ui_text_review_nanos_button(unsigned int button_mask,
                                  unsigned int button_mask_counter) {
     switch (button_mask) {
@@ -327,13 +406,16 @@ bagl_ui_text_review_nanos_button(unsigned int button_mask,
     return 0;
 }
 
-unsigned int io_seproxyhal_touch_exit(bagl_element_t *e) {
+#endif
+
+static const bagl_element_t *io_seproxyhal_touch_exit(const bagl_element_t *e) {
     // Go back to the dashboard
     os_sched_exit(0);
-    return 0; // do not redraw the widget
+    return NULL; // do not redraw the widget
 }
 
-unsigned int io_seproxyhal_touch_approve(bagl_element_t *e) {
+static const bagl_element_t*
+io_seproxyhal_touch_approve(const bagl_element_t *e) {
     unsigned int tx = 0;
     // Update the hash
     cx_hash(&hash.header, 0, G_io_apdu_buffer + 5, G_io_apdu_buffer[4], NULL);
@@ -341,8 +423,8 @@ unsigned int io_seproxyhal_touch_approve(bagl_element_t *e) {
         // Hash is finalized, send back the signature
         unsigned char result[32];
         cx_hash(&hash.header, CX_LAST, G_io_apdu_buffer, 0, result);
-        tx = cx_ecdsa_sign(&N_privateKey, CX_RND_RFC6979 | CX_LAST, CX_SHA256,
-                           result, sizeof(result), G_io_apdu_buffer);
+        tx = cx_ecdsa_sign((void*) &N_privateKey, CX_RND_RFC6979 | CX_LAST,
+                           CX_SHA256, result, sizeof(result), G_io_apdu_buffer);
         G_io_apdu_buffer[0] &= 0xF0; // discard the parity information
         hashTainted = 1;
     }
@@ -355,7 +437,7 @@ unsigned int io_seproxyhal_touch_approve(bagl_element_t *e) {
     return 0; // do not redraw the widget
 }
 
-unsigned int io_seproxyhal_touch_deny(bagl_element_t *e) {
+static const bagl_element_t *io_seproxyhal_touch_deny(const bagl_element_t *e) {
     hashTainted = 1;
     G_io_apdu_buffer[0] = 0x69;
     G_io_apdu_buffer[1] = 0x85;
@@ -392,7 +474,7 @@ unsigned short io_exchange_al(unsigned char channel, unsigned short tx_len) {
     return 0;
 }
 
-void sample_main(void) {
+static void sample_main(void) {
     volatile unsigned int rx = 0;
     volatile unsigned int tx = 0;
     volatile unsigned int flags = 0;
@@ -495,9 +577,9 @@ void io_seproxyhal_display(const bagl_element_t *element) {
 }
 
 // Pick the text elements to display
-unsigned char display_text_part() {
+static unsigned char display_text_part() {
     unsigned int i;
-    WIDE char *text = G_io_apdu_buffer + 5;
+    WIDE char *text = (char*) G_io_apdu_buffer + 5;
     if (text[current_text_pos] == '\0') {
         return 0;
     }
@@ -511,52 +593,48 @@ unsigned char display_text_part() {
         current_text_pos++;
     }
     lineBuffer[i] = '\0';
-    if (os_seph_features() &
-        SEPROXYHAL_TAG_SESSION_START_EVENT_FEATURE_SCREEN_BIG) {
-        os_memset(bagl_ui_text, 0, sizeof(bagl_ui_text));
-        bagl_ui_text[0].component.type = BAGL_LABEL;
-        bagl_ui_text[0].component.x = 4;
-        bagl_ui_text[0].component.y = text_y;
-        bagl_ui_text[0].component.width = 320;
-        bagl_ui_text[0].component.height = TEXT_HEIGHT;
-        // element.component.fill = BAGL_FILL;
-        bagl_ui_text[0].component.fgcolor = 0x000000;
-        bagl_ui_text[0].component.bgcolor = 0xf9f9f9;
-        bagl_ui_text[0].component.font_id = DEFAULT_FONT;
-        bagl_ui_text[0].text = lineBuffer;
-        text_y += TEXT_HEIGHT + TEXT_SPACE;
-    }
+#ifdef TARGET_BLUE
+    os_memset(bagl_ui_text, 0, sizeof(bagl_ui_text));
+    bagl_ui_text[0].component.type = BAGL_LABEL;
+    bagl_ui_text[0].component.x = 4;
+    bagl_ui_text[0].component.y = text_y;
+    bagl_ui_text[0].component.width = 320;
+    bagl_ui_text[0].component.height = TEXT_HEIGHT;
+    // element.component.fill = BAGL_FILL;
+    bagl_ui_text[0].component.fgcolor = 0x000000;
+    bagl_ui_text[0].component.bgcolor = 0xf9f9f9;
+    bagl_ui_text[0].component.font_id = DEFAULT_FONT;
+    bagl_ui_text[0].text = lineBuffer;
+    text_y += TEXT_HEIGHT + TEXT_SPACE;
+#endif
     return 1;
 }
 
-void ui_idle(void) {
+static void ui_idle(void) {
     uiState = UI_IDLE;
-    if (os_seph_features() &
-        SEPROXYHAL_TAG_SESSION_START_EVENT_FEATURE_SCREEN_BIG) {
-        UX_DISPLAY(bagl_ui_idle_blue, NULL);
-    } else {
-        UX_DISPLAY(bagl_ui_idle_nanos, NULL);
-    }
+#ifdef TARGET_BLUE
+    UX_DISPLAY(bagl_ui_idle_blue, NULL);
+#else
+    UX_DISPLAY(bagl_ui_idle_nanos, NULL);
+#endif
 }
 
-void ui_text(void) {
+static void ui_text(void) {
     uiState = UI_TEXT;
-    if (os_seph_features() &
-        SEPROXYHAL_TAG_SESSION_START_EVENT_FEATURE_SCREEN_BIG) {
-        UX_DISPLAY(bagl_ui_text, NULL);
-    } else {
-        UX_DISPLAY(bagl_ui_text_review_nanos, NULL);
-    }
+#ifdef TARGET_BLUE
+    UX_DISPLAY(bagl_ui_text, NULL);
+#else
+    UX_DISPLAY(bagl_ui_text_review_nanos, NULL);
+#endif
 }
 
-void ui_approval(void) {
+static void ui_approval(void) {
     uiState = UI_APPROVAL;
-    if (os_seph_features() &
-        SEPROXYHAL_TAG_SESSION_START_EVENT_FEATURE_SCREEN_BIG) {
-        UX_DISPLAY(bagl_ui_approval_blue, NULL);
-    } else {
-        UX_DISPLAY(bagl_ui_approval_nanos, NULL);
-    }
+#ifdef TARGET_BLUE
+    UX_DISPLAY(bagl_ui_approval_blue, NULL);
+#else
+    UX_DISPLAY(bagl_ui_approval_nanos, NULL);
+#endif
 }
 
 unsigned char io_event(unsigned char channel) {
@@ -585,7 +663,7 @@ unsigned char io_event(unsigned char channel) {
         } else {
             if (UX_DISPLAYED()) {
             } else {
-                UX_DISPLAY_PROCESSED_EVENT();
+                UX_DISPLAYED_EVENT();
             }
         }
         break;
@@ -633,9 +711,10 @@ __attribute__((section(".boot"))) int main(void) {
                 cx_ecfp_public_key_t publicKey;
                 cx_ecfp_generate_pair(CX_CURVE_256K1, &publicKey, &privateKey,
                                       0);
-                nvm_write(&N_privateKey, &privateKey, sizeof(privateKey));
+                nvm_write((void*) &N_privateKey, &privateKey,
+                          sizeof(privateKey));
                 canary = 0x01;
-                nvm_write(&N_initialized, &canary, sizeof(canary));
+                nvm_write((void*) &N_initialized, &canary, sizeof(canary));
             }
 
 #ifdef LISTEN_BLE
