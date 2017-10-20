@@ -44,7 +44,7 @@ static void ui_text(void);
 static void ui_approval(void);
 
 #define MAX_CHARS_PER_LINE 49
-#define DEFAULT_FONT BAGL_FONT_OPEN_SANS_LIGHT_13px | BAGL_FONT_ALIGNMENT_LEFT
+#define DEFAULT_FONT BAGL_FONT_OPEN_SANS_LIGHT_16px | BAGL_FONT_ALIGNMENT_LEFT
 #define TEXT_HEIGHT 15
 #define TEXT_SPACE 4
 
@@ -661,19 +661,16 @@ unsigned char io_event(unsigned char channel) {
                 UX_REDISPLAY();
             }
         } else {
-            if (UX_DISPLAYED()) {
-            } else {
-                UX_DISPLAYED_EVENT();
-            }
+            UX_DISPLAYED_EVENT();
         }
         break;
 
     case SEPROXYHAL_TAG_TICKER_EVENT:
-        UX_REDISPLAY();
         break;
 
     // unknown events are acknowledged
     default:
+        UX_DEFAULT_EVENT();
         break;
     }
 
