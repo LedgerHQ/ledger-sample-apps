@@ -479,6 +479,10 @@ static void sample_main(void) {
     volatile unsigned int tx = 0;
     volatile unsigned int flags = 0;
 
+
+    // next timer callback in 500 ms
+    UX_CALLBACK_SET_INTERVAL(500);
+
     // DESIGN NOTE: the bootloader ignores the way APDU are fetched. The only
     // goal is to retrieve APDU.
     // When APDU are to be fetched from multiple IOs, like NFC+USB+BLE, make
@@ -666,6 +670,14 @@ unsigned char io_event(unsigned char channel) {
         break;
 
     case SEPROXYHAL_TAG_TICKER_EVENT:
+        #ifdef TARGET_NANOS
+            UX_TICKER_EVENT(G_io_seproxyhal_spi_buffer, {
+                // defaulty retrig very soon (will be overriden during
+                // stepper_prepro)
+                UX_CALLBACK_SET_INTERVAL(500);
+                UX_REDISPLAY();
+            });
+        #endif 
         break;
 
     // unknown events are acknowledged
