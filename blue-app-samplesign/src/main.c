@@ -714,15 +714,14 @@ __attribute__((section(".boot"))) int main(void) {
             io_seproxyhal_init();
 
             // Create the private key if not initialized
-            if (N_initialized != 0x01) {
-                unsigned char canary;
+            unsigned char canary = 0x01;
+            if (N_initialized != canary) {
                 cx_ecfp_private_key_t privateKey;
                 cx_ecfp_public_key_t publicKey;
                 cx_ecfp_generate_pair(CX_CURVE_256K1, &publicKey, &privateKey,
                                       0);
                 nvm_write((void*) &N_privateKey, &privateKey,
                           sizeof(privateKey));
-                canary = 0x01;
                 nvm_write((void*) &N_initialized, &canary, sizeof(canary));
             }
 
