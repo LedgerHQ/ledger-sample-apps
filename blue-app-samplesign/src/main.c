@@ -418,13 +418,13 @@ static const bagl_element_t*
 io_seproxyhal_touch_approve(const bagl_element_t *e) {
     unsigned int tx = 0;
     // Update the hash
-    cx_hash(&hash.header, 0, G_io_apdu_buffer + 5, G_io_apdu_buffer[4], NULL);
+    cx_hash(&hash.header, 0, G_io_apdu_buffer + 5, G_io_apdu_buffer[4], NULL, 0);
     if (G_io_apdu_buffer[2] == P1_LAST) {
         // Hash is finalized, send back the signature
         unsigned char result[32];
-        cx_hash(&hash.header, CX_LAST, G_io_apdu_buffer, 0, result);
+        cx_hash(&hash.header, CX_LAST, G_io_apdu_buffer, 0, result, 32);
         tx = cx_ecdsa_sign((void*) &N_privateKey, CX_RND_RFC6979 | CX_LAST,
-                           CX_SHA256, result, sizeof(result), G_io_apdu_buffer);
+                           CX_SHA256, result, sizeof(result), G_io_apdu_buffer, sizeof(G_io_apdu_buffer), NULL);
         G_io_apdu_buffer[0] &= 0xF0; // discard the parity information
         hashTainted = 1;
     }
