@@ -421,7 +421,11 @@ unsigned char io_event(unsigned char channel) {
         break;
 
     case SEPROXYHAL_TAG_TICKER_EVENT:
-        UX_REDISPLAY();
+        UX_TICKER_EVENT(G_io_seproxyhal_spi_buffer, {
+            if (UX_ALLOWED) {
+                UX_REDISPLAY();
+            }
+        });
         break;
 
     // unknown events are acknowledged
