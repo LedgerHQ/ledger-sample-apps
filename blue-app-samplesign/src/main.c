@@ -44,7 +44,7 @@ static void ui_text(void);
 static void ui_approval(void);
 
 #define MAX_CHARS_PER_LINE 49
-#define DEFAULT_FONT BAGL_FONT_OPEN_SANS_LIGHT_16px | BAGL_FONT_ALIGNMENT_LEFT
+#define DEFAULT_FONT BAGL_FONT_OPEN_SANS_LIGHT_14px | BAGL_FONT_ALIGNMENT_LEFT
 #define TEXT_HEIGHT 15
 #define TEXT_SPACE 4
 
