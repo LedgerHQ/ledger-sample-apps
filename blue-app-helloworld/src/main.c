@@ -25,7 +25,7 @@ unsigned char G_io_seproxyhal_spi_buffer[IO_SEPROXYHAL_BUFFER_SIZE_B];
 static const bagl_element_t *io_seproxyhal_touch_exit(const bagl_element_t *e);
 
 ux_state_t ux;
-
+char*name="Person";
 // ********************************************************************************
 // Ledger Blue specific UI
 // ********************************************************************************
@@ -125,7 +125,7 @@ static const bagl_element_t bagl_ui_sample_nanos[] = {
     {
         {BAGL_LABELINE, 0x01, 0, 12, 128, 32, 0, 0, 0, 0xFFFFFF, 0x000000,
          BAGL_FONT_OPEN_SANS_REGULAR_11px | BAGL_FONT_ALIGNMENT_CENTER, 0},
-        "Hello World",
+        "Hello "+name,
         0,
         0,
         0,
@@ -161,8 +161,15 @@ static unsigned int
 bagl_ui_sample_nanos_button(unsigned int button_mask,
                             unsigned int button_mask_counter) {
     switch (button_mask) {
-    case BUTTON_EVT_RELEASED | BUTTON_LEFT | BUTTON_RIGHT: // EXIT
-        io_seproxyhal_touch_exit(NULL);
+    case BUTTON_EVT_RELEASED | BUTTON_LEFT : // EXIT
+        name="ANTON";
+        UX_REDISPLAY();
+        break;
+    }
+    
+    case BUTTON_EVT_RELEASED | BUTTON_RIGHT: // EXIT
+        name="URA";
+        UX_REDISPLAY();
         break;
     }
     return 0;
