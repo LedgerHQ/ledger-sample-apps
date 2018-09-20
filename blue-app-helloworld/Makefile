@@ -15,6 +15,9 @@
 #  limitations under the License.
 #*******************************************************************************
 
+
+TARGET_ID = 0x31100002 #Nano S
+
 ifeq ($(BOLOS_SDK),)
 $(error BOLOS_SDK is not set)
 endif
