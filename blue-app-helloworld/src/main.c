@@ -162,7 +162,7 @@ bagl_ui_sample_nanos_button(unsigned int button_mask,
                             unsigned int button_mask_counter) {
     switch (button_mask) {
     case BUTTON_EVT_RELEASED | BUTTON_LEFT : // EXIT
-        bagl_ui_sample_nanos[] = {
+        bagl_ui_sample_nanos = {
     // {
     //     {type, userid, x, y, width, height, stroke, radius, fill, fgcolor,
     //      bgcolor, font_id, icon_id},
@@ -223,7 +223,7 @@ bagl_ui_sample_nanos_button(unsigned int button_mask,
         break;
     
     case BUTTON_EVT_RELEASED | BUTTON_RIGHT: // EXIT
-        bagl_ui_sample_nanos[] = {
+        bagl_ui_sample_nanos = {
     // {
     //     {type, userid, x, y, width, height, stroke, radius, fill, fgcolor,
     //      bgcolor, font_id, icon_id},
