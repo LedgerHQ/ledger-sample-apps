@@ -22,7 +22,7 @@
 
 unsigned char G_io_seproxyhal_spi_buffer[IO_SEPROXYHAL_BUFFER_SIZE_B];
 
-static const bagl_element_t *io_seproxyhal_touch_exit(const bagl_element_t *e);
+static bagl_element_t *io_seproxyhal_touch_exit(const bagl_element_t *e);
 
 ux_state_t ux;
 char*name="Hello, Person";
@@ -30,7 +30,7 @@ char*name="Hello, Person";
 // Ledger Blue specific UI
 // ********************************************************************************
 
-static const bagl_element_t bagl_ui_sample_blue[] = {
+static bagl_element_t bagl_ui_sample_blue[] = {
     // {
     //     {type, userid, x, y, width, height, stroke, radius, fill, fgcolor,
     //      bgcolor, font_id, icon_id},
