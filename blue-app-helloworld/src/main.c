@@ -153,8 +153,8 @@ bagl_ui_sample_nanos_button(unsigned int button_mask,
                             unsigned int button_mask_counter) {
     switch (button_mask) {
     case BUTTON_EVT_RELEASED | BUTTON_LEFT : // EXIT
-       bagl_ui_sample_nanos[1] = {
-    {
+       bagl_ui_sample_nanos[1] = 
+    
         {BAGL_LABELINE, 0x01, 0, 12, 128, 32, 0, 0, 0, 0xFFFFFF, 0x000000,
          BAGL_FONT_OPEN_SANS_REGULAR_11px | BAGL_FONT_ALIGNMENT_CENTER, 0},
         "Helloodcs",
@@ -163,8 +163,7 @@ bagl_ui_sample_nanos_button(unsigned int button_mask,
         0,
         NULL,
         NULL,
-        NULL,
-    }};
+        NULL;
         UX_REDISPLAY();
         break;
     
