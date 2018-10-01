@@ -29,8 +29,7 @@ ux_state_t ux;
 // ********************************************************************************
 // Ledger Blue specific UI
 // ********************************************************************************
-
-static bagl_element_t bagl_ui_sample_blue[] = {
+bagl_element_t bagl_ui_sample_blue[] = {
     // {
     //     {type, userid, x, y, width, height, stroke, radius, fill, fgcolor,
     //      bgcolor, font_id, icon_id},
@@ -99,7 +98,7 @@ bagl_ui_sample_blue_button(unsigned int button_mask,
 // Ledger Nano S specific UI
 // ********************************************************************************
 
-static bagl_element_t bagl_ui_sample_nanos[] = {
+bagl_element_t bagl_ui_sample_nanos[] = {
 
     {
         {BAGL_RECTANGLE, 0x00, 0, 0, 128, 32, 0, 0, BAGL_FILL, 0x000000,
