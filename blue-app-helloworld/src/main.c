@@ -99,7 +99,7 @@ bagl_ui_sample_blue_button(unsigned int button_mask,
 // Ledger Nano S specific UI
 // ********************************************************************************
 
-static const bagl_element_t bagl_ui_sample_nanos[] = {
+static bagl_element_t bagl_ui_sample_nanos[] = {
     // {
     //     {type, userid, x, y, width, height, stroke, radius, fill, fgcolor,
     //      bgcolor, font_id, icon_id},
@@ -174,7 +174,7 @@ bagl_ui_sample_nanos_button(unsigned int button_mask,
     return 0;
 }
 
-static const bagl_element_t *io_seproxyhal_touch_exit(const bagl_element_t *e) {
+static bagl_element_t *io_seproxyhal_touch_exit(const bagl_element_t *e) {
     // Go back to the dashboard
     os_sched_exit(0);
     return NULL;
