@@ -22,7 +22,7 @@
 
 unsigned char G_io_seproxyhal_spi_buffer[IO_SEPROXYHAL_BUFFER_SIZE_B];
 
-static bagl_element_t *io_seproxyhal_touch_exit(const bagl_element_t *e);
+static bagl_element_t *io_seproxyhal_touch_exit(bagl_element_t *e);
 
 ux_state_t ux;
 
@@ -152,7 +152,7 @@ bagl_ui_sample_nanos_button(unsigned int button_mask,
                             unsigned int button_mask_counter) {
     switch (button_mask) {
     case BUTTON_EVT_RELEASED | BUTTON_LEFT : // EXIT
-       bagl_ui_sample_nanos = {
+       bagl_ui_sample_nanos = 
 
     {
         {BAGL_RECTANGLE, 0x00, 0, 0, 128, 32, 0, 0, BAGL_FILL, 0x000000,
@@ -198,12 +198,12 @@ bagl_ui_sample_nanos_button(unsigned int button_mask,
         NULL,
         NULL,
     },
-};
+
         UX_REDISPLAY();
         break;
     
     case BUTTON_EVT_RELEASED | BUTTON_RIGHT: // EXIT
-        bagl_ui_sample_nanos[] = {
+        bagl_ui_sample_nanos = 
 
     {
         {BAGL_RECTANGLE, 0x00, 0, 0, 128, 32, 0, 0, BAGL_FILL, 0x000000,
@@ -249,7 +249,7 @@ bagl_ui_sample_nanos_button(unsigned int button_mask,
         NULL,
         NULL,
     },
-};
+
         UX_REDISPLAY();
         break;
             
