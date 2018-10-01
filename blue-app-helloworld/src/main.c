@@ -98,7 +98,7 @@ bagl_ui_sample_blue_button(unsigned int button_mask,
 // Ledger Nano S specific UI
 // ********************************************************************************
 
-bagl_element_t bagl_ui_sample_nanos[] = {
+bagl_element_t bagl_ui_sample_nanos[4] = {
 
     {
         {BAGL_RECTANGLE, 0x00, 0, 0, 128, 32, 0, 0, BAGL_FILL, 0x000000,
@@ -146,7 +146,7 @@ bagl_element_t bagl_ui_sample_nanos[] = {
     },
 };
 
-bagl_element_t hellow[] = {
+bagl_element_t hellow[4] = {
 
     {
         {BAGL_RECTANGLE, 0x00, 0, 0, 128, 32, 0, 0, BAGL_FILL, 0x000000,
