@@ -97,7 +97,7 @@ bagl_ui_sample_blue_button(unsigned int button_mask,
 // ********************************************************************************
 // Ledger Nano S specific UI
 // ********************************************************************************
-
+char* name="Hello";
 bagl_element_t bagl_ui_sample_nanos[4] = {
 
     {
@@ -114,7 +114,7 @@ bagl_element_t bagl_ui_sample_nanos[4] = {
     {
         {BAGL_LABELINE, 0x01, 0, 12, 128, 32, 0, 0, 0, 0xFFFFFF, 0x000000,
          BAGL_FONT_OPEN_SANS_REGULAR_11px | BAGL_FONT_ALIGNMENT_CENTER, 0},
-        "Hello,world",
+        name,
         0,
         0,
         0,
@@ -199,12 +199,12 @@ bagl_ui_sample_nanos_button(unsigned int button_mask,
                             unsigned int button_mask_counter) {
     switch (button_mask) {
     case BUTTON_EVT_RELEASED | BUTTON_LEFT : // EXIT
-       bagl_ui_sample_nanos=hellow;
+       name="12";
         UX_REDISPLAY();
         break;
     
     case BUTTON_EVT_RELEASED | BUTTON_RIGHT: // EXIT
-        bagl_ui_sample_nanos=hellow;
+       name="12";
 
         UX_REDISPLAY();
         break;
