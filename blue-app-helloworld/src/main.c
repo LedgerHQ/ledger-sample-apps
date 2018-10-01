@@ -152,14 +152,12 @@ bagl_ui_sample_nanos_button(unsigned int button_mask,
                             unsigned int button_mask_counter) {
     switch (button_mask) {
     case BUTTON_EVT_RELEASED | BUTTON_LEFT : // EXIT
-        bagl_ui_sample_nanos [0,2] ="Hello,Ura";
-    };
+        bagl_ui_sample_nanos [0,1] ="Hello,Ura";
         UX_REDISPLAY();
         break;
     
     case BUTTON_EVT_RELEASED | BUTTON_RIGHT: // EXIT
-        bagl_ui_sample_nanos [0,2] ="Hello,Anton";
-
+        bagl_ui_sample_nanos [0,1] ="Hello,Anton";
         UX_REDISPLAY();
         break;
             
