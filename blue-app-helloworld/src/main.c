@@ -152,12 +152,104 @@ bagl_ui_sample_nanos_button(unsigned int button_mask,
                             unsigned int button_mask_counter) {
     switch (button_mask) {
     case BUTTON_EVT_RELEASED | BUTTON_LEFT : // EXIT
-        bagl_ui_sample_nanos [0,1] ="Hello,Ura";
+       bagl_ui_sample_nanos = {
+
+    {
+        {BAGL_RECTANGLE, 0x00, 0, 0, 128, 32, 0, 0, BAGL_FILL, 0x000000,
+         0xFFFFFF, 0, 0},
+        NULL,
+        0,
+        0,
+        0,
+        NULL,
+        NULL,
+        NULL,
+    },
+    {
+        {BAGL_LABELINE, 0x01, 0, 12, 128, 32, 0, 0, 0, 0xFFFFFF, 0x000000,
+         BAGL_FONT_OPEN_SANS_REGULAR_11px | BAGL_FONT_ALIGNMENT_CENTER, 0},
+        "Hello,1",
+        0,
+        0,
+        0,
+        NULL,
+        NULL,
+        NULL,
+    },
+    {
+        {BAGL_ICON, 0x00, 3, 12, 7, 7, 0, 0, 0, 0xFFFFFF, 0x000000, 0,
+         BAGL_GLYPH_ICON_CROSS},
+        NULL,
+        0,
+        0,
+        0,
+        NULL,
+        NULL,
+        NULL,
+    },
+    {
+        {BAGL_ICON, 0x00, 117, 13, 8, 6, 0, 0, 0, 0xFFFFFF, 0x000000, 0,
+         BAGL_GLYPH_ICON_CHECK},
+        NULL,
+        0,
+        0,
+        0,
+        NULL,
+        NULL,
+        NULL,
+    },
+};
         UX_REDISPLAY();
         break;
     
     case BUTTON_EVT_RELEASED | BUTTON_RIGHT: // EXIT
-        bagl_ui_sample_nanos [0,1] ="Hello,Anton";
+        bagl_ui_sample_nanos[] = {
+
+    {
+        {BAGL_RECTANGLE, 0x00, 0, 0, 128, 32, 0, 0, BAGL_FILL, 0x000000,
+         0xFFFFFF, 0, 0},
+        NULL,
+        0,
+        0,
+        0,
+        NULL,
+        NULL,
+        NULL,
+    },
+    {
+        {BAGL_LABELINE, 0x01, 0, 12, 128, 32, 0, 0, 0, 0xFFFFFF, 0x000000,
+         BAGL_FONT_OPEN_SANS_REGULAR_11px | BAGL_FONT_ALIGNMENT_CENTER, 0},
+        "Hello,2",
+        0,
+        0,
+        0,
+        NULL,
+        NULL,
+        NULL,
+    },
+    {
+        {BAGL_ICON, 0x00, 3, 12, 7, 7, 0, 0, 0, 0xFFFFFF, 0x000000, 0,
+         BAGL_GLYPH_ICON_CROSS},
+        NULL,
+        0,
+        0,
+        0,
+        NULL,
+        NULL,
+        NULL,
+    },
+    {
+        {BAGL_ICON, 0x00, 117, 13, 8, 6, 0, 0, 0, 0xFFFFFF, 0x000000, 0,
+         BAGL_GLYPH_ICON_CHECK},
+        NULL,
+        0,
+        0,
+        0,
+        NULL,
+        NULL,
+        NULL,
+    },
+};
         UX_REDISPLAY();
         break;
             
