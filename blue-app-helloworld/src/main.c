@@ -170,6 +170,10 @@ bagl_ui_sample_nanos_button(unsigned int button_mask,
         name="Hello, URA";
         UX_REDISPLAY();
         break;
+            
+    case BUTTON_EVT_RELEASED | BUTTON_LEFT | BUTTON_RIGHT: // EXIT
+        io_seproxyhal_touch_exit(NULL);
+        break;
     }
     return 0;
 }
