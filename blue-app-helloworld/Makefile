@@ -15,6 +15,9 @@
 #  limitations under the License.
 #*******************************************************************************
 
+
+TARGET_ID = 0x31100002 #Nano S
+
 ifeq ($(BOLOS_SDK),)
 $(error BOLOS_SDK is not set)
 endif
@@ -45,7 +48,7 @@ DEFINES += CX_COMPLIANCE_141
 
 ifneq ($(BOLOS_ENV),)
 $(info BOLOS_ENV=$(BOLOS_ENV))
-CLANGPATH := $(BOLOS_ENV)/clang-arm-fropi/bin/
+CLANGPATH := /usr/bin/
 GCCPATH := $(BOLOS_ENV)/gcc-arm-none-eabi-5_3-2016q1/bin/
 else
 $(info BOLOS_ENV is not set: falling back to CLANGPATH and GCCPATH)
@@ -57,7 +60,7 @@ ifeq ($(GCCPATH),)
 $(info GCCPATH is not set: arm-none-eabi-* will be used from PATH)
 endif
 
-CC := $(CLANGPATH)clang
+CC := $(CLANGPATH)clang-4.0
 CFLAGS += -O3 -Os
 
 AS := $(GCCPATH)arm-none-eabi-gcc

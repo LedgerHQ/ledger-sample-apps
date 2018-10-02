@@ -22,15 +22,14 @@
 
 unsigned char G_io_seproxyhal_spi_buffer[IO_SEPROXYHAL_BUFFER_SIZE_B];
 
-static const bagl_element_t *io_seproxyhal_touch_exit(const bagl_element_t *e);
+static bagl_element_t *io_seproxyhal_touch_exit(bagl_element_t *e);
 
 ux_state_t ux;
 
 // ********************************************************************************
 // Ledger Blue specific UI
 // ********************************************************************************
-
-static const bagl_element_t bagl_ui_sample_blue[] = {
+bagl_element_t bagl_ui_sample_blue[] = {
     // {
     //     {type, userid, x, y, width, height, stroke, radius, fill, fgcolor,
     //      bgcolor, font_id, icon_id},
@@ -98,19 +97,22 @@ bagl_ui_sample_blue_button(unsigned int button_mask,
 // ********************************************************************************
 // Ledger Nano S specific UI
 // ********************************************************************************
+struct temporary {
+    bagl_component_t component;
 
-static const bagl_element_t bagl_ui_sample_nanos[] = {
-    // {
-    //     {type, userid, x, y, width, height, stroke, radius, fill, fgcolor,
-    //      bgcolor, font_id, icon_id},
-    //     text,
-    //     touch_area_brim,
-    //     overfgcolor,
-    //     overbgcolor,
-    //     tap,
-    //     out,
-    //     over,
-    // },
+    char *text;
+    unsigned char touch_area_brim;
+    int overfgcolor;
+    int overbgcolor;
+    bagl_element_callback_t tap;
+    bagl_element_callback_t out;
+    bagl_element_callback_t over;
+};
+
+char*name="Hello1";
+
+temporary tmp[] = 
+
     {
         {BAGL_RECTANGLE, 0x00, 0, 0, 128, 32, 0, 0, BAGL_FILL, 0x000000,
          0xFFFFFF, 0, 0},
@@ -125,7 +127,7 @@ static const bagl_element_t bagl_ui_sample_nanos[] = {
     {
         {BAGL_LABELINE, 0x01, 0, 12, 128, 32, 0, 0, 0, 0xFFFFFF, 0x000000,
          BAGL_FONT_OPEN_SANS_REGULAR_11px | BAGL_FONT_ALIGNMENT_CENTER, 0},
-        "Hello World",
+        name,
         0,
         0,
         0,
@@ -157,10 +159,20 @@ static const bagl_element_t bagl_ui_sample_nanos[] = {
     },
 };
 
+
 static unsigned int
 bagl_ui_sample_nanos_button(unsigned int button_mask,
                             unsigned int button_mask_counter) {
     switch (button_mask) {
+    case BUTTON_EVT_RELEASED | BUTTON_LEFT : // EXIT
+       name="Hello2";
+    
+    case BUTTON_EVT_RELEASED | BUTTON_RIGHT: // EXIT
+       name="Hello3";
+
+        UX_REDISPLAY();
+        break;
+            
     case BUTTON_EVT_RELEASED | BUTTON_LEFT | BUTTON_RIGHT: // EXIT
         io_seproxyhal_touch_exit(NULL);
         break;
@@ -168,7 +180,7 @@ bagl_ui_sample_nanos_button(unsigned int button_mask,
     return 0;
 }
 
-static const bagl_element_t *io_seproxyhal_touch_exit(const bagl_element_t *e) {
+static bagl_element_t *io_seproxyhal_touch_exit(bagl_element_t *e) {
     // Go back to the dashboard
     os_sched_exit(0);
     return NULL;
@@ -205,7 +217,7 @@ static void ui_idle(void) {
         SEPROXYHAL_TAG_SESSION_START_EVENT_FEATURE_SCREEN_BIG) {
         UX_DISPLAY(bagl_ui_sample_blue, NULL);
     } else {
-        UX_DISPLAY(bagl_ui_sample_nanos, NULL);
+        UX_DISPLAY(tmp, NULL);
     }
 }
 
