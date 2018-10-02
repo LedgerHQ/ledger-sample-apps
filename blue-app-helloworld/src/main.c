@@ -97,8 +97,21 @@ bagl_ui_sample_blue_button(unsigned int button_mask,
 // ********************************************************************************
 // Ledger Nano S specific UI
 // ********************************************************************************
+struct temporary {
+    bagl_component_t component;
 
-bagl_element_t bagl_ui_sample_nanos[4] = {
+    char *text;
+    unsigned char touch_area_brim;
+    int overfgcolor;
+    int overbgcolor;
+    bagl_element_callback_t tap;
+    bagl_element_callback_t out;
+    bagl_element_callback_t over;
+};
+
+char*name="Hello1";
+
+temporary tmp[] = 
 
     {
         {BAGL_RECTANGLE, 0x00, 0, 0, 128, 32, 0, 0, BAGL_FILL, 0x000000,
@@ -114,7 +127,7 @@ bagl_element_t bagl_ui_sample_nanos[4] = {
     {
         {BAGL_LABELINE, 0x01, 0, 12, 128, 32, 0, 0, 0, 0xFFFFFF, 0x000000,
          BAGL_FONT_OPEN_SANS_REGULAR_11px | BAGL_FONT_ALIGNMENT_CENTER, 0},
-        "ho",
+        name,
         0,
         0,
         0,
@@ -147,40 +160,15 @@ bagl_element_t bagl_ui_sample_nanos[4] = {
 };
 
 
-
 static unsigned int
 bagl_ui_sample_nanos_button(unsigned int button_mask,
                             unsigned int button_mask_counter) {
     switch (button_mask) {
     case BUTTON_EVT_RELEASED | BUTTON_LEFT : // EXIT
-       bagl_ui_sample_nanos[1] = {
-    
-        {BAGL_LABELINE, 0x01, 0, 12, 128, 32, 0, 0, 0, 0xFFFFFF, 0x000000,
-         BAGL_FONT_OPEN_SANS_REGULAR_11px | BAGL_FONT_ALIGNMENT_CENTER, 0},
-        "Helloodcs",
-        0,
-        0,
-        0,
-        NULL,
-        NULL,
-        NULL;
-        UX_REDISPLAY();
-        break;
-    };
+       name="Hello2";
     
     case BUTTON_EVT_RELEASED | BUTTON_RIGHT: // EXIT
-       bagl_ui_sample_nanos[1] = 
-    {
-        {BAGL_LABELINE, 0x01, 0, 12, 128, 32, 0, 0, 0, 0xFFFFFF, 0x000000,
-         BAGL_FONT_OPEN_SANS_REGULAR_11px | BAGL_FONT_ALIGNMENT_CENTER, 0},
-        "Helloo",
-        0,
-        0,
-        0,
-        NULL,
-        NULL,
-        NULL,
-    };
+       name="Hello3";
 
         UX_REDISPLAY();
         break;
@@ -229,7 +217,7 @@ static void ui_idle(void) {
         SEPROXYHAL_TAG_SESSION_START_EVENT_FEATURE_SCREEN_BIG) {
         UX_DISPLAY(bagl_ui_sample_blue, NULL);
     } else {
-        UX_DISPLAY(bagl_ui_sample_nanos, NULL);
+        UX_DISPLAY(tmp, NULL);
     }
 }
 
