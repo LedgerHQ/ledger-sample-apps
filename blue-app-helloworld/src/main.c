@@ -17,8 +17,8 @@
 
 #include "os.h"
 #include "cx.h"
-
-#include "os_io_seproxyhal.h"
+#include "ux.h"
+#include <string.h>
 
 unsigned char G_io_seproxyhal_spi_buffer[IO_SEPROXYHAL_BUFFER_SIZE_B];
 
@@ -46,46 +46,54 @@ static const bagl_element_t bagl_ui_sample_blue[] = {
         {BAGL_RECTANGLE, 0x00, 0, 60, 320, 420, 0, 0, BAGL_FILL, 0xf9f9f9,
          0xf9f9f9, 0, 0},
         NULL,
+#ifdef TARGET_BLUE
         0,
         0,
         0,
         NULL,
         NULL,
         NULL,
+#endif /* TARGET_BLUE */
     },
     {
         {BAGL_RECTANGLE, 0x00, 0, 0, 320, 60, 0, 0, BAGL_FILL, 0x1d2028,
          0x1d2028, 0, 0},
         NULL,
+#ifdef TARGET_BLUE
         0,
         0,
         0,
         NULL,
         NULL,
         NULL,
+#endif /* TARGET_BLUE */
     },
     {
         {BAGL_LABEL, 0x00, 20, 0, 320, 60, 0, 0, BAGL_FILL, 0xFFFFFF, 0x1d2028,
          BAGL_FONT_OPEN_SANS_LIGHT_14px | BAGL_FONT_ALIGNMENT_MIDDLE, 0},
         "Hello World",
+#ifdef TARGET_BLUE
         0,
         0,
         0,
         NULL,
         NULL,
         NULL,
+#endif /* TARGET_BLUE */
     },
     {
         {BAGL_BUTTON | BAGL_FLAG_TOUCHABLE, 0x00, 165, 225, 120, 40, 0, 6,
          BAGL_FILL, 0x41ccb4, 0xF9F9F9, BAGL_FONT_OPEN_SANS_LIGHT_14px |
          BAGL_FONT_ALIGNMENT_CENTER | BAGL_FONT_ALIGNMENT_MIDDLE, 0},
         "EXIT",
+#ifdef TARGET_BLUE
         0,
         0x37ae99,
         0xF9F9F9,
         io_seproxyhal_touch_exit,
         NULL,
         NULL,
+#endif /* TARGET_BLUE */
     },
 };
 
@@ -115,45 +123,53 @@ static const bagl_element_t bagl_ui_sample_nanos[] = {
         {BAGL_RECTANGLE, 0x00, 0, 0, 128, 32, 0, 0, BAGL_FILL, 0x000000,
          0xFFFFFF, 0, 0},
         NULL,
+#ifdef TARGET_BLUE
         0,
         0,
         0,
         NULL,
         NULL,
         NULL,
+#endif /* TARGET_BLUE */
     },
     {
         {BAGL_LABELINE, 0x01, 0, 12, 128, 32, 0, 0, 0, 0xFFFFFF, 0x000000,
          BAGL_FONT_OPEN_SANS_REGULAR_11px | BAGL_FONT_ALIGNMENT_CENTER, 0},
         "Hello World",
+#ifdef TARGET_BLUE
         0,
         0,
         0,
         NULL,
         NULL,
         NULL,
+#endif /* TARGET_BLUE */
     },
     {
         {BAGL_ICON, 0x00, 3, 12, 7, 7, 0, 0, 0, 0xFFFFFF, 0x000000, 0,
          BAGL_GLYPH_ICON_CROSS},
         NULL,
+#ifdef TARGET_BLUE
         0,
         0,
         0,
         NULL,
         NULL,
         NULL,
+#endif /* TARGET_BLUE */
     },
     {
         {BAGL_ICON, 0x00, 117, 13, 8, 6, 0, 0, 0, 0xFFFFFF, 0x000000, 0,
          BAGL_GLYPH_ICON_CHECK},
         NULL,
+#ifdef TARGET_BLUE
         0,
         0,
         0,
         NULL,
         NULL,
         NULL,
+#endif /* TARGET_BLUE */
     },
 };
 
