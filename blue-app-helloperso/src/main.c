@@ -88,7 +88,7 @@ static const bagl_element_t const bagl_ui_sample_blue[] = {
     },
     {
         {BAGL_LABEL, 0x00, 20, 100, 320, 60, 0, 0, 0, 0, 0xF9F9F9F9,
-         BAGL_FONT_OPEN_SANS_LIGHT_16px | BAGL_FONT_ALIGNMENT_CENTER, 0},
+         BAGL_FONT_OPEN_SANS_LIGHT_14px | BAGL_FONT_ALIGNMENT_CENTER, 0},
         address,
         0,
         0,
@@ -421,7 +421,11 @@ unsigned char io_event(unsigned char channel) {
         break;
 
     case SEPROXYHAL_TAG_TICKER_EVENT:
-        UX_REDISPLAY();
+        UX_TICKER_EVENT(G_io_seproxyhal_spi_buffer, {
+            if (UX_ALLOWED) {
+                UX_REDISPLAY();
+            }
+        });
         break;
 
     // unknown events are acknowledged
